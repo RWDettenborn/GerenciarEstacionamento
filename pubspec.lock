@@ -57,14 +57,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
-  decimal:
-    dependency: transitive
-    description:
-      name: decimal
-      sha256: "2c3c8b74f2948066d3f42585477aec9cfc48fefd7a723a4d4274a6c71a5c0df7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.6"
   fake_async:
     dependency: transitive
     description:
@@ -89,14 +81,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
-  fixed:
-    dependency: transitive
-    description:
-      name: fixed
-      sha256: d1acef34c8ef195b50228e3b7ec80c24f843ab1bfb1636041b922a62e10123aa
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.2.0"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -144,22 +128,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
-  intl:
-    dependency: transitive
-    description:
-      name: intl
-      sha256: "1ca20c894b1717686a2319b8548763d812bc0aabdac580420a44c5178c57a867"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.20.3"
   jni:
     dependency: transitive
     description:
       name: jni
-      sha256: "6b9ca0602fef0230e83149afbe3f9f8227e94f2bbe84a1da4f14d699742f402d"
+      sha256: d8df6dab6847855512fe44dd9032b0bbe34dda7bf7597e41d30750879779813f
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0"
+    version: "1.1.1"
   jni_util:
     dependency: transitive
     description:
@@ -224,14 +200,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.0"
-  money2:
-    dependency: "direct main"
-    description:
-      name: money2
-      sha256: "695f317508beae72c392d0d62fd4c1f9ac1127e25117aaf2e75e20953139ffce"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.3.0"
   package_config:
     dependency: transitive
     description:
@@ -288,14 +256,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
-  rational:
-    dependency: transitive
-    description:
-      name: rational
-      sha256: cb808fb6f1a839e6fc5f7d8cb3b0a10e1db48b3be102de73938c627f0b636336
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.3"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -308,10 +268,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_android
-      sha256: a67a1a6a62b241ad4ddd8a97f5a12bb547c445190930233b63cd28cc0a104a76
+      sha256: "33b38b07d9ac7d16aff0426c61418752fd3e7a8c7dc8be786c875d6ce673b002"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.1"
+    version: "2.5.4"
   shared_preferences_foundation:
     dependency: transitive
     description:

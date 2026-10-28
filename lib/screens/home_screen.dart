@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Registro de Vagas do Edificio Gran Lider'),
+        title: const Text('Estacionamento'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
@@ -46,7 +46,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 12),
-                Text('Carregando...'),
+                Text('Carregando... (a API pode levar alguns segundos)'),
               ],
             ),
           );

@@ -13,10 +13,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Registro de Vagas do Edificio Gran Lider',
+      title: 'Estacionamento',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white12),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white60),
       ),
       home: const HomeScreen(),
     );

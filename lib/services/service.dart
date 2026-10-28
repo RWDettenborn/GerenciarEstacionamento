@@ -1,133 +1,73 @@
 import 'dart:convert';
-import 'dart:math';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/model.dart';
 
 class ParkingSpotService {
-  static const String _chave = 'parking_spots';
+  static const String baseUrl = 'https://parking-spot-pmfd.onrender.com';
+  static const String _path = '/parking-spot';
 
-  Map<String, dynamic> _paraMapa(ParkingSpot v) => {
-        'id': v.id,
-        'registrationDate': v.registrationDate,
-        ...v.toJson(),
-      };
+  static const Duration _timeout = Duration(seconds: 60);
 
-  Future<List<ParkingSpot>> _ler() async {
-    final prefs = await SharedPreferences.getInstance();
-    final texto = prefs.getString(_chave);
-    if (texto == null || texto.isEmpty) return [];
-    final dados = jsonDecode(texto) as List<dynamic>;
-    return dados
-        .map((e) => ParkingSpot.fromJson(e as Map<String, dynamic>))
-        .toList();
+  static const Map<String, String> _headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+
+  Uri _uri(String path, [Map<String, String>? query]) =>
+      Uri.parse('$baseUrl$path').replace(queryParameters: query);
+
+  String _erro(http.Response r) {
+    final corpo = utf8.decode(r.bodyBytes).trim();
+    if (corpo.isEmpty) return 'Erro HTTP ${r.statusCode}';
+    return 'Erro HTTP ${r.statusCode}: $corpo';
   }
 
-  Future<void> _gravar(List<ParkingSpot> vagas) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        _chave, jsonEncode(vagas.map(_paraMapa).toList()));
+  List<ParkingSpot> _lista(List<dynamic> dados) => dados
+      .map((e) => ParkingSpot.fromJson(e as Map<String, dynamic>))
+      .toList();
+
+  Future<List<ParkingSpot>> listar() async {
+    final r =
+        await http.get(_uri(_path), headers: _headers).timeout(_timeout);
+    if (r.statusCode != 200) throw Exception(_erro(r));
+    return _lista(jsonDecode(utf8.decode(r.bodyBytes)) as List<dynamic>);
   }
-
-  String _novoUuid() {
-    final r = Random.secure();
-    final b = List<int>.generate(16, (_) => r.nextInt(256));
-    b[6] = (b[6] & 0x0f) | 0x40;
-    b[8] = (b[8] & 0x3f) | 0x80;
-    final h = b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
-    return '${h.substring(0, 8)}-${h.substring(8, 12)}-'
-        '${h.substring(12, 16)}-${h.substring(16, 20)}-${h.substring(20)}';
-  }
-
-  bool _igual(String a, String b) =>
-      a.trim().toLowerCase() == b.trim().toLowerCase();
-
-  void _validar(ParkingSpot nova, List<ParkingSpot> existentes,
-      {String? ignorarId}) {
-    if (nova.parkingSpotNumber.trim().isEmpty ||
-        nova.licensePlateCar.trim().isEmpty ||
-        nova.brandCar.trim().isEmpty ||
-        nova.modelCar.trim().isEmpty ||
-        nova.colorCar.trim().isEmpty ||
-        nova.responsibleName.trim().isEmpty ||
-        nova.apartment.trim().isEmpty ||
-        nova.block.trim().isEmpty) {
-      throw Exception('Preencha todos os campos.');
-    }
-    if (nova.parkingSpotNumber.trim().length > 10) {
-      throw Exception('O número da vaga deve ter no máximo 10 caracteres.');
-    }
-    if (nova.licensePlateCar.trim().length > 7) {
-      throw Exception('A placa deve ter no máximo 7 caracteres.');
-    }
-    for (final v in existentes) {
-      if (v.id == ignorarId) continue;
-      if (_igual(v.parkingSpotNumber, nova.parkingSpotNumber)) {
-        throw Exception('Parking Spot is already in use!');
-      }
-      if (_igual(v.licensePlateCar, nova.licensePlateCar)) {
-        throw Exception('License Plate Car is already in use!');
-      }
-      if (_igual(v.apartment, nova.apartment) && _igual(v.block, nova.block)) {
-        throw Exception(
-            'Parking Spot already registered for this apartment/block!');
-      }
-    }
-  }
-
-  ParkingSpot _limpa(ParkingSpot v, {String? id, String? data}) => ParkingSpot(
-        id: id,
-        registrationDate: data,
-        parkingSpotNumber: v.parkingSpotNumber.trim(),
-        licensePlateCar: v.licensePlateCar.trim().toUpperCase(),
-        brandCar: v.brandCar.trim(),
-        modelCar: v.modelCar.trim(),
-        colorCar: v.colorCar.trim(),
-        responsibleName: v.responsibleName.trim(),
-        apartment: v.apartment.trim(),
-        block: v.block.trim(),
-      );
-
-  Future<List<ParkingSpot>> listar() async => _ler();
 
   Future<ParkingSpot> cadastrar(ParkingSpot vaga) async {
-    final vagas = await _ler();
-    _validar(vaga, vagas);
-    final criada = _limpa(vaga,
-        id: _novoUuid(), data: DateTime.now().toUtc().toIso8601String());
-    vagas.add(criada);
-    await _gravar(vagas);
-    return criada;
+    final r = await http
+        .post(_uri(_path), headers: _headers, body: jsonEncode(vaga.toJson()))
+        .timeout(_timeout);
+    if (r.statusCode != 201 && r.statusCode != 200) throw Exception(_erro(r));
+    return ParkingSpot.fromJson(
+        jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>);
   }
 
   Future<ParkingSpot> buscarPorId(String id) async {
-    final vagas = await _ler();
-    for (final v in vagas) {
-      if (v.id == id) return v;
-    }
-    throw Exception('Parking Spot not found.');
+    final r =
+        await http.get(_uri('$_path/$id'), headers: _headers).timeout(_timeout);
+    if (r.statusCode != 200) throw Exception(_erro(r));
+    return ParkingSpot.fromJson(
+        jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>);
   }
 
   Future<ParkingSpot> atualizar(String id, ParkingSpot vaga) async {
-    final vagas = await _ler();
-    final i = vagas.indexWhere((v) => v.id == id);
-    if (i < 0) throw Exception('Parking Spot not found.');
-    _validar(vaga, vagas, ignorarId: id);
-    final atualizada =
-        _limpa(vaga, id: id, data: vagas[i].registrationDate);
-    vagas[i] = atualizada;
-    await _gravar(vagas);
-    return atualizada;
+    final r = await http
+        .put(_uri('$_path/$id'),
+            headers: _headers, body: jsonEncode(vaga.toJson()))
+        .timeout(_timeout);
+    if (r.statusCode != 200) throw Exception(_erro(r));
+    return ParkingSpot.fromJson(
+        jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>);
   }
 
   Future<String> excluir(String id) async {
-    final vagas = await _ler();
-    final antes = vagas.length;
-    vagas.removeWhere((v) => v.id == id);
-    if (vagas.length == antes) throw Exception('Parking Spot not found.');
-    await _gravar(vagas);
-    return 'Parking Spot deleted successfully.';
+    final r = await http
+        .delete(_uri('$_path/$id'), headers: _headers)
+        .timeout(_timeout);
+    if (r.statusCode != 200) throw Exception(_erro(r));
+    return utf8.decode(r.bodyBytes);
   }
 
   Future<List<ParkingSpot>> listarPaginado({
@@ -135,42 +75,16 @@ class ParkingSpotService {
     int size = 5,
     String sort = 'parkingSpotNumber,asc',
   }) async {
-    final vagas = await _ler();
-    final partes = sort.split(',');
-    final campo = partes.first;
-    final desc = partes.length > 1 && partes[1].toLowerCase() == 'desc';
-
-    String chave(ParkingSpot v) {
-      switch (campo) {
-        case 'licensePlateCar':
-          return v.licensePlateCar;
-        case 'responsibleName':
-          return v.responsibleName;
-        case 'brandCar':
-          return v.brandCar;
-        case 'modelCar':
-          return v.modelCar;
-        case 'colorCar':
-          return v.colorCar;
-        case 'apartment':
-          return v.apartment;
-        case 'block':
-          return v.block;
-        case 'registrationDate':
-          return v.registrationDate ?? '';
-        default:
-          return v.parkingSpotNumber;
-      }
-    }
-
-    vagas.sort((a, b) {
-      final c = chave(a).toLowerCase().compareTo(chave(b).toLowerCase());
-      return desc ? -c : c;
-    });
-
-    final inicio = page * size;
-    if (inicio >= vagas.length) return [];
-    final fim = min(inicio + size, vagas.length);
-    return vagas.sublist(inicio, fim);
+    final r = await http.get(
+      _uri('$_path/order', {
+        'page': '$page',
+        'size': '$size',
+        'sort': sort,
+      }),
+      headers: _headers,
+    ).timeout(_timeout);
+    if (r.statusCode != 200) throw Exception(_erro(r));
+    final mapa = jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
+    return _lista(mapa['content'] as List<dynamic>);
   }
 }
